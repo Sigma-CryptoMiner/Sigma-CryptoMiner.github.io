@@ -1,2 +1,2 @@
-# Sigma-CryptoMiner.github.io
-My 67 website
+# https://Sigma-CryptoMiner.github.io
+[My 67 website]
