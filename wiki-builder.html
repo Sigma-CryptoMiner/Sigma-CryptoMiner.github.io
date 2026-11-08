@@ -1,314 +1,294 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Repentance Plus Wiki - Master Compiler</title>
-    <style>
-        :root {
-            --bg-color: #110814;
-            --text-color: #e2daf0;
-            --sidebar-bg: #1e1024;
-            --card-bg: rgba(36, 20, 43, 0.9);
-            --accent-color: #7b2cbf;
-            --border-color: #4a255c;
-            --input-bg: #0b040e;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            background-image: radial-gradient(circle, #251230 10%, #110814 90%);
-            color: var(--text-color);
-            display: flex;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Control Panel */
-        aside {
-            width: 450px;
-            background-color: var(--sidebar-bg);
-            padding: 20px;
-            border-right: 3px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            flex-shrink: 0;
-            overflow-y: auto;
-        }
-
-        h2, h3 { border-bottom: 2px solid var(--accent-color); padding-bottom: 5px; margin-bottom: 5px; font-size: 1.1rem; color: #fff; }
-        p { font-size: 0.8rem; opacity: 0.8; line-height: 1.3; }
-
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            background-color: var(--input-bg);
-            color: var(--text-color);
-            border: 2px solid var(--border-color);
-            border-radius: 4px;
-            font-family: inherit;
-        }
-
-        textarea {
-            flex-grow: 1;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.85rem;
-            resize: none;
-        }
-
-        .btn-group { display: flex; gap: 10px; }
-        button {
-            flex: 1;
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.9rem;
-        }
-        button:hover { opacity: 0.9; }
-        .download-btn { background-color: #38b000; }
-
-        main { flex: 1; padding: 40px; overflow-y: auto; }
-        .wiki-card {
-            background-color: var(--card-bg);
-            padding: 35px;
-            border-radius: 8px;
-            border: 2px solid var(--border-color);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
-            backdrop-filter: blur(4px);
-        }
-
-        /* Sidebar Navigation Previews */
-        .directory-box {
-            background: rgba(0,0,0,0.2);
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid var(--border-color);
-            max-height: 120px;
-            overflow-y: auto;
-        }
-        .directory-box ul { list-style: none; padding-left: 5px; font-size: 0.85rem;}
-
-        /* Live Output Preview Layout rules */
-        .wiki-card img { max-width: 120px; height: auto; display: inline-block; margin: 10px; vertical-align: middle; background: rgba(0,0,0,0.3); padding: 6px; border-radius: 4px; border: 1px solid var(--border-color); }
-        .wiki-card table { width: 100%; border-collapse: collapse; margin: 20px 0; background: rgba(0,0,0,0.4); border: 2px solid var(--border-color); }
-        .wiki-card td { padding: 12px; vertical-align: top; border: 1px solid var(--border-color); }
-        .wiki-card th { background-color: var(--accent-color); color: white; padding: 10px; text-align: left; border: 1px solid var(--border-color); }
-        .wiki-card a { color: #d4a5ff; text-decoration: none; font-weight: bold; }
-        .wiki-card a:hover { text-decoration: underline; color: #fff; }
-        .wiki-card ul { margin-left: 25px; margin-bottom: 15px; }
-        .wiki-card li { margin-bottom: 5px; line-height: 1.5; }
-    </style>
-</head>
-<body>
-
-    <!-- SIDEBAR PANEL -->
-    <aside>
-        <h2>Wikitext Master Processor</h2>
-        <p>Convert Fandom syntax and instantly register dynamic page endpoints inside your navigation menu layout.</p>
-        
-        <label><b>1. Page Target Identifier (Matches Link Name):</b></label>
-        <input type="text" id="pageFileName" placeholder="e.g., collectibles" value="Collectibles">
-        
-        <label><b>2. Current Master Directory Index:</b></label>
-        <div class="directory-box">
-            <ul id="directoryPreview"></ul>
-        </div>
-        
-        <label><b>3. Paste Fandom Wikitext Source:</b></label>
-        <textarea id="wikitextInput" placeholder="Paste wikitext code..."></textarea>
-        
-        <div class="btn-group">
-            <button onclick="processAndPreview()">Preview Layout</button>
-            <button class="download-btn" onclick="downloadCompiledPage()">Export Page File</button>
-        </div>
-    </aside>
-
-    <!-- LIVE VIEW WORKSPACE -->
-    <main>
-        <div class="wiki-card" id="outputWorkspace"></div>
-    </main>
-
-    <script>
-        // Track unique page entries registered through the system session
-        let masterDirectory = JSON.parse(localStorage.getItem('wiki_index_registry')) || ["index", "collectibles", "trinkets"];
-
-        window.onload = function() {
-            // Seed a small mock dataset on startup
-            document.getElementById('wikitextInput').value = `<mainpage-leftcolumn-start />\n<div style="text-align: center; font-size: x-large; padding: 1em;">'''Welcome to the Repentance Plus Mod Wiki!'''</div>\n[[File:Logo.png|center|480x480px]]\n\n*59 items\n*23 trinkets\n\n{| class="hoverimage" style="text-align:center;" align="center"\n|-\n| style="background:transparent;" |[[File:01_collectibles_ordinarylife.png|center|150px|link=[[Collectibles]]]]\n| style="background:transparent;" |[[File:02_trinkets_basementkey.png|center|150px|link=[[Trinkets]]]]\n|-\n|[[Collectibles]]\n|[[Trinkets]]\n|}`;
-            renderDirectoryMenu();
-            processAndPreview();
-        };
-
-        function renderDirectoryMenu() {
-            const container = document.getElementById('directoryPreview');
-            container.innerHTML = '';
-            masterDirectory.forEach(item => {
-                const li = document.createElement('li');
-                li.innerText = `📄 ${item}.html`;
-                container.appendChild(li);
-            });
-        }
-
-        // Bulletproof MediaWiki-to-HTML parser conversion map
-        function compileWikitext(rawText) {
-            let src = rawText;
-            src = src.replace(/<mainpage-.*?\/>/g, '').replace(/\[\[Category:.*?\]\]/g, '').replace(/<nowiki\/>/g, '');
-            src = src.replace(/'''(.*?)'''/g, '<strong>$1</strong>').replace(/''(.*?)''/g, '<em>$1</em>');
-            
-            // Redirect media structures safely back to Fandom image servers
-            src = src.replace(/\[\[File:([^|\]]+).*?link=\[\[([^\]]+)\]\]\]\]/g, (m, f, t) => {
-                return `<a href="${t.toLowerCase().replace(/ /g, '_')}.html"><img src="https://fandom.com{f}" alt="${f}"></a>`;
-            });
-            src = src.replace(/\[\[File:([^|\]]+).*?\]\]/g, (m, f) => `<img src="https://fandom.com{f}" alt="${f}">`);
-
-            // Inner wiki navigation hooks conversion
-            src = src.replace(/\[\[([^|\]]+)\|([^\]]+)\]\]/g, (m, t, d) => `<a href="${t.toLowerCase().replace(/ /g, '_')}.html">${d}</a>`);
-            src = src.replace(/\[\[([^\]]+)\]\]/g, (m, t) => `<a href="${t.toLowerCase().replace(/ /g, '_')}.html">${t}</a>`);
-
-            // REBUILT TABLE ALGORITHM: Simple block line loop replaces freezing regex matches
-            let lines = src.split('\n');
-            let insideTable = false;
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i].trim();
-                if (line.startsWith('{|')) {
-                    lines[i] = '<table>';
-                    insideTable = true;
-                } else if (line.startsWith('|}')) {
-                    lines[i] = '</tr></table>';
-                    insideTable = false;
-                } else if (line.startsWith('|-')) {
-                    lines[i] = '</tr><tr>';
-                } else if (line.startsWith('|') && insideTable) {
-                    // Extract custom cell styles if present (e.g. style="...")
-                    if (line.includes('|') && line.indexOf('|') !== line.lastIndexOf('|')) {
-                        let textParts = line.split('|');
-                        textParts.shift(); // remove original entry
-                        let stylePart = textParts.shift();
-                        lines[i] = `<td ${stylePart}>${textParts.join('|')}</td>`;
-                    } else {
-                        lines[i] = `<td>${line.substring(1)}</td>`;
-                    }
-                }
-            }
-            src = lines.join('\n');
-
-            // List elements algorithm parser logic
-            lines = src.split('\n');
-            let inList = false;
-            for(let i=0; i<lines.length; i++) {
-                if(lines[i].trim().startsWith('*')) {
-                    let text = lines[i].replace(/^\*\s*/, '');
-                    lines[i] = (inList ? '' : '<ul>') + `<li>${text}</li>`;
-                    inList = true;
-                } else if (inList) {
-                    lines[i] = '</ul>' + lines[i];
-                    inList = false;
-                }
-            }
-            return lines.join('\n');
-        }
-
-        function processAndPreview() {
-            const raw = document.getElementById('wikitextInput').value;
-            document.getElementById('outputWorkspace').innerHTML = compileWikitext(raw);
-        }
-
-        // AUTO-INJECT NAVIGATION TREE & DOWNLOAD PACKER FUNCTION
-function downloadCompiledPage() {
-const rawName = document.getElementById('pageFileName').value.trim();
-if(!rawName) return alert("Please type a file destination name first!");
-const normalizedName = rawName.toLowerCase().replace(/ /g, '_');
-// Auto-register new names directly into your ongoing master registry array
-if(!masterDirectory.includes(normalizedName)) {
-masterDirectory.push(normalizedName);
-localStorage.setItem('wiki_index_registry', JSON.stringify(masterDirectory));
-renderDirectoryMenu();
-}
-const rawWikitext = document.getElementById('wikitextInput').value;
-const parsedBody = compileWikitext(rawWikitext);
-// Generate structural links block matching current compiled catalog
-let generatedNavigationHtml = '';
-masterDirectory.forEach(item => {
-let displayName = item.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-if (item === 'index') displayName = '🏠 Home Portal';
-generatedNavigationHtml += <li><a href="${item}.html">${displayName}</a></li>\n;
-});
-// Master design template applied across every exported module file
-const documentPayload = `
-
-
-
-
-Repentance Plus Wiki - ${rawName}
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Repentance Plus Wiki - Master Compiler</title>
+<style>
 :root {
---bg-color: #110814;
---text-color: #e2daf0;
---sidebar-bg: #1e1024;
---card-bg: rgba(36, 20, 43, 0.9);
---accent-color: #7b2cbf;
---border-color: #4a255c;
+    --bg-color: #110814;
+    --text-color: #e2daf0;
+    --sidebar-bg: #1e1024;
+    --card-bg: rgba(36, 20, 43, 0.9);
+    --accent-color: #7b2cbf;
+    --border-color: #4a255c;
+    --input-bg: #0b040e;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-font-family: 'Segoe UI', Tahoma, sans-serif;
-background-color: var(--bg-color);
-background-image: radial-gradient(circle, #251230 10%, #110814 90%);
-color: var(--text-color);
-display: flex;
-min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    background-image: radial-gradient(circle, #251230 10%, #110814 90%);
+    color: var(--text-color);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
 }
 aside {
-width: 280px;
-background-color: var(--sidebar-bg);
-padding: 25px;
-border-right: 3px solid var(--border-color);
-flex-shrink: 0;
+    width: 450px;
+    background-color: var(--sidebar-bg);
+    padding: 20px;
+    border-right: 3px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-shrink: 0;
+    overflow-y: auto;
 }
-h2 { border-bottom: 2px solid var(--accent-color); padding-bottom: 5px; margin-bottom: 15px; font-size: 1.2rem; color: #fff; }
-ul.nav { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0;}
-ul.nav li a {
-color: var(--text-color);
-text-decoration: none;
-display: block;
-padding: 10px;
-background: rgba(0,0,0,0.3);
-border-radius: 4px;
-border: 1px solid transparent;
-font-size: 0.95rem;
-font-weight: bold;
+h2, h3 { border-bottom: 2px solid var(--accent-color); padding-bottom: 5px; margin-bottom: 5px; font-size: 1.1rem; color: #fff; }
+p { font-size: 0.8rem; opacity: 0.8; line-height: 1.3; }
+input, textarea {
+    width: 100%;
+    padding: 10px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    font-family: inherit;
 }
-ul.nav li a:hover { border-color: var(--accent-color); background: rgba(0,0,0,0.5); }
+textarea {
+    flex-grow: 1;
+    min-height: 200px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.85rem;
+    resize: none;
+}
+.btn-group { display: flex; gap: 10px; }
+button {
+    flex: 1;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+button:hover { opacity: 0.9; }
+.download-btn { background-color: #38b000; }
 main { flex: 1; padding: 40px; overflow-y: auto; }
-.card { background-color: var(--card-bg); padding: 35px; border-radius: 8px; border: 2px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-table { width: 100%; border-collapse: collapse; margin: 20px 0; background: rgba(0,0,0,0.4); border: 2px solid var(--border-color); }
-th, td { border: 1px solid var(--border-color); padding: 12px; text-align: left; }
-th { background-color: var(--accent-color); color: white; }
-img { max-width: 120px; height: auto; display: inline-block; vertical-align: middle; background: rgba(0,0,0,0.3); padding: 6px; border-radius: 4px; border: 1px solid var(--border-color); }
-a { color: #d4a5ff; text-decoration: none; font-weight: bold; }
-a:hover { text-decoration: underline; color: #fff; }
-ul { margin-left: 25px; margin-bottom: 15px; }
-li { margin-bottom: 5px; line-height: 1.5; }
-
-
-Wiki Directory
-
-${generatedNavigationHtml}
-
-${parsedBody}
-
-`;
-// Stream transmission compilation download script
-const blob = new Blob([documentPayload], { type: 'text/html' });
-const link = document.createElement('a');
-link.href = URL.createObjectURL(blob);
-link.download = ${normalizedName}.html;
-link.click();
+.wiki-card {
+    background-color: var(--card-bg);
+    padding: 35px;
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
 }
+.directory-box {
+    background: rgba(0,0,0,0.2);
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    max-height: 120px;
+    overflow-y: auto;
+}
+.directory-box ul { list-style: none; padding-left: 5px; font-size: 0.85rem; }
+.wiki-card img { max-width: 120px; height: auto; display: inline-block; margin: 10px; vertical-align: middle; background: rgba(0,0,0,0.3); padding: 6px; border-radius: 4px; border: 1px solid var(--border-color); }
+.wiki-card table { width: 100%; border-collapse: collapse; margin: 20px 0; background: rgba(0,0,0,0.4); border: 2px solid var(--border-color); }
+.wiki-card td { padding: 12px; vertical-align: top; border: 1px solid var(--border-color); }
+.wiki-card th { background-color: var(--accent-color); color: white; padding: 10px; text-align: left; border: 1px solid var(--border-color); }
+.wiki-card a { color: #d4a5ff; text-decoration: none; font-weight: bold; }
+.wiki-card a:hover { text-decoration: underline; color: #fff; }
+.wiki-card ul { margin-left: 25px; margin-bottom: 15px; }
+.wiki-card li { margin-bottom: 5px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<aside>
+    <h2>Wikitext Master Processor</h2>
+    <p>Convert Fandom syntax and instantly register dynamic page endpoints inside your navigation menu layout.</p>
+
+    <label><b>1. Page Target Identifier (Matches Link Name):</b></label>
+    <input type="text" id="pageFileName" placeholder="e.g., collectibles" value="Collectibles">
+
+    <label><b>2. Current Master Directory Index:</b></label>
+    <div class="directory-box"><ul id="directoryPreview"></ul></div>
+
+    <label><b>3. Paste Fandom Wikitext Source:</b></label>
+    <textarea id="wikitextInput" placeholder="Paste wikitext code..."></textarea>
+
+    <div class="btn-group">
+        <button type="button" id="previewBtn">Preview Layout</button>
+        <button type="button" class="download-btn" id="downloadBtn">Export Page File</button>
+    </div>
+</aside>
+
+<main>
+    <div class="wiki-card" id="outputWorkspace"></div>
+</main>
+
+<script>
+// Fandom image files can't be derived from a filename alone. Set this to your
+// wiki's Special:FilePath URL (keep the trailing slash).
+const IMAGE_BASE = "https://YOUR-WIKI.fandom.com/wiki/Special:FilePath/";
+
+// localStorage can throw (file:// pages, private mode, sandboxed frames).
+// Never let that block the download.
+function loadRegistry() {
+    try {
+        const saved = JSON.parse(localStorage.getItem('wiki_index_registry'));
+        if (Array.isArray(saved)) return saved;
+    } catch (e) {}
+    return ["index", "collectibles", "trinkets"];
+}
+function saveRegistry(list) {
+    try { localStorage.setItem('wiki_index_registry', JSON.stringify(list)); } catch (e) {}
+}
+
+let masterDirectory = loadRegistry();
+
+function renderDirectoryMenu() {
+    const container = document.getElementById('directoryPreview');
+    container.innerHTML = '';
+    masterDirectory.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = '📄 ' + item + '.html';
+        container.appendChild(li);
+    });
+}
+
+function slug(t) { return t.trim().toLowerCase().replace(/ /g, '_'); }
+
+function compileWikitext(rawText) {
+    let src = rawText;
+    src = src.replace(/<mainpage-.*?\/>/g, '').replace(/\[\[Category:.*?\]\]/g, '').replace(/<nowiki\/>/g, '');
+    src = src.replace(/'''(.*?)'''/g, '<strong>$1</strong>').replace(/''(.*?)''/g, '<em>$1</em>');
+
+    // Images (linked, then plain)
+    src = src.replace(/\[\[File:([^|\]]+).*?link=\[\[([^\]]+)\]\]\]\]/g, (m, f, t) =>
+        '<a href="' + slug(t) + '.html"><img src="' + IMAGE_BASE + encodeURIComponent(f.trim()) + '" alt="' + f.trim() + '"></a>');
+    src = src.replace(/\[\[File:([^|\]]+).*?\]\]/g, (m, f) =>
+        '<img src="' + IMAGE_BASE + encodeURIComponent(f.trim()) + '" alt="' + f.trim() + '">');
+
+    // Internal links
+    src = src.replace(/\[\[([^|\]]+)\|([^\]]+)\]\]/g, (m, t, d) => '<a href="' + slug(t) + '.html">' + d + '</a>');
+    src = src.replace(/\[\[([^\]]+)\]\]/g, (m, t) => '<a href="' + slug(t) + '.html">' + t + '</a>');
+
+    // Tables
+    let lines = src.split('\n');
+    let insideTable = false, rowOpen = false;
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith('{|')) {
+            lines[i] = '<table>'; insideTable = true; rowOpen = false;
+        } else if (line.startsWith('|}')) {
+            lines[i] = (rowOpen ? '</tr>' : '') + '</table>'; insideTable = false; rowOpen = false;
+        } else if (line.startsWith('|-') && insideTable) {
+            lines[i] = (rowOpen ? '</tr>' : '') + '<tr>'; rowOpen = true;
+        } else if (line.startsWith('|') && insideTable) {
+            if (!rowOpen) { lines[i] = '<tr>'; rowOpen = true; } else { lines[i] = ''; }
+            if (line.indexOf('|') !== line.lastIndexOf('|')) {
+                const parts = line.split('|');
+                parts.shift();
+                const stylePart = parts.shift();
+                lines[i] += '<td ' + stylePart + '>' + parts.join('|') + '</td>';
+            } else {
+                lines[i] += '<td>' + line.substring(1) + '</td>';
+            }
+        }
+    }
+    src = lines.join('\n');
+
+    // Lists
+    lines = src.split('\n');
+    let inList = false;
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].trim().startsWith('*')) {
+            const text = lines[i].replace(/^\s*\*\s*/, '');
+            lines[i] = (inList ? '' : '<ul>') + '<li>' + text + '</li>';
+            inList = true;
+        } else if (inList) {
+            lines[i] = '</ul>' + lines[i];
+            inList = false;
+        }
+    }
+    if (inList) lines.push('</ul>');
+    return lines.join('\n');
+}
+
+function processAndPreview() {
+    const raw = document.getElementById('wikitextInput').value;
+    document.getElementById('outputWorkspace').innerHTML = compileWikitext(raw);
+}
+
+function downloadCompiledPage() {
+    const rawName = document.getElementById('pageFileName').value.trim();
+    if (!rawName) { alert("Please type a file destination name first!"); return; }
+    const normalizedName = slug(rawName);
+
+    if (!masterDirectory.includes(normalizedName)) {
+        masterDirectory.push(normalizedName);
+        saveRegistry(masterDirectory);
+        renderDirectoryMenu();
+    }
+
+    const parsedBody = compileWikitext(document.getElementById('wikitextInput').value);
+
+    let nav = '';
+    masterDirectory.forEach(item => {
+        let displayName = item.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        if (item === 'index') displayName = '🏠 Home Portal';
+        nav += '<li><a href="' + item + '.html">' + displayName + '</a></li>\n';
+    });
+
+    const css = `
+:root { --bg-color:#110814; --text-color:#e2daf0; --sidebar-bg:#1e1024; --card-bg:rgba(36,20,43,0.9); --accent-color:#7b2cbf; --border-color:#4a255c; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Segoe UI',Tahoma,sans-serif; background-color:var(--bg-color); background-image:radial-gradient(circle,#251230 10%,#110814 90%); color:var(--text-color); display:flex; min-height:100vh; }
+aside { width:280px; background-color:var(--sidebar-bg); padding:25px; border-right:3px solid var(--border-color); flex-shrink:0; }
+h2 { border-bottom:2px solid var(--accent-color); padding-bottom:5px; margin-bottom:15px; font-size:1.2rem; color:#fff; }
+ul.nav { list-style:none; display:flex; flex-direction:column; gap:8px; margin:0; padding:0; }
+ul.nav li a { color:var(--text-color); text-decoration:none; display:block; padding:10px; background:rgba(0,0,0,0.3); border-radius:4px; border:1px solid transparent; font-size:0.95rem; font-weight:bold; }
+ul.nav li a:hover { border-color:var(--accent-color); background:rgba(0,0,0,0.5); }
+main { flex:1; padding:40px; overflow-y:auto; }
+.card { background-color:var(--card-bg); padding:35px; border-radius:8px; border:2px solid var(--border-color); box-shadow:0 4px 15px rgba(0,0,0,0.5); backdrop-filter:blur(4px); }
+table { width:100%; border-collapse:collapse; margin:20px 0; background:rgba(0,0,0,0.4); border:2px solid var(--border-color); }
+th, td { border:1px solid var(--border-color); padding:12px; text-align:left; vertical-align:top; }
+th { background-color:var(--accent-color); color:white; }
+img { max-width:120px; height:auto; display:inline-block; vertical-align:middle; background:rgba(0,0,0,0.3); padding:6px; border-radius:4px; border:1px solid var(--border-color); }
+a { color:#d4a5ff; text-decoration:none; font-weight:bold; }
+a:hover { text-decoration:underline; color:#fff; }
+ul { margin-left:25px; margin-bottom:15px; }
+li { margin-bottom:5px; line-height:1.5; }
+`;
+
+    const documentPayload =
+        '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n' +
+        '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
+        '<title>Repentance Plus Wiki - ' + rawName + '</title>\n' +
+        '<style>' + css + '</style>\n</head>\n<body>\n' +
+        '<aside>\n<h2>Wiki Directory</h2>\n<ul class="nav">\n' + nav + '</ul>\n</aside>\n' +
+        '<main>\n<div class="card">\n' + parsedBody + '\n</div>\n</main>\n</body>\n</html>';
+
+    const blob = new Blob([documentPayload], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = normalizedName + '.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+document.getElementById('previewBtn').addEventListener('click', processAndPreview);
+document.getElementById('downloadBtn').addEventListener('click', downloadCompiledPage);
+
+window.addEventListener('load', function () {
+    document.getElementById('wikitextInput').value =
+        '<mainpage-leftcolumn-start />\n' +
+        '<div style="text-align: center; font-size: x-large; padding: 1em;">\'\'\'Welcome to the Repentance Plus Mod Wiki!\'\'\'</div>\n' +
+        '[[File:Logo.png|center|480x480px]]\n\n*59 items\n*23 trinkets\n\n' +
+        '{| class="hoverimage" style="text-align:center;" align="center"\n|-\n' +
+        '| style="background:transparent;" |[[File:01_collectibles_ordinarylife.png|center|150px|link=[[Collectibles]]]]\n' +
+        '| style="background:transparent;" |[[File:02_trinkets_basementkey.png|center|150px|link=[[Trinkets]]]]\n|-\n' +
+        '|[[Collectibles]]\n|[[Trinkets]]\n|}';
+    renderDirectoryMenu();
+    processAndPreview();
+});
+</script>
+</body>
+</html>
