@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repentance Plus Mod - Home Portal</title>
+    <style>
+        :root {
+            --bg-color: #120c08;
+            --text-color: #dfd5c6;
+            --sidebar-bg: #2b1f17;
+            --card-bg: #3a2e24;
+            --accent-color: #b33629;
+            --border-color: #534235;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+        }
+        aside {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            padding: 20px;
+            border-right: 2px solid var(--border-color);
+        }
+        h2, h3 { border-bottom: 2px solid var(--accent-color); padding-bottom: 5px; margin-bottom: 15px; }
+        ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+        ul li a {
+            color: var(--text-color);
+            text-decoration: none;
+            display: block;
+            padding: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+            border: 1px solid transparent;
+        }
+        ul li a:hover {
+            border-color: var(--accent-color);
+            background: rgba(0,0,0,0.4);
+        }
+        main { flex: 1; padding: 40px; max-width: 900px; }
+        .card { background-color: var(--card-bg); padding: 30px; border-radius: 8px; border: 1px solid var(--border-color); }
+        h1 { margin-bottom: 20px; color: #fff; }
+        p { line-height: 1.6; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <aside>
+        <h2>Wiki Directory</h2>
+        <ul>
+            <li><a href="index.html">🏠 Home Portal</a></li>
+            <li><a href="collectibles.html">🛡️ Collectibles</a></li>
+            <li><a href="trinkets.html">💎 Trinkets</a></li>
+        </ul>
+    </aside>
+
+    <main>
+        <div class="card">
+            <h1>Repentance Plus Mod Wiki</h1>
+            <p>Welcome to your dedicated, standalone repository for the Repentance Plus Mod. This dashboard links separate, static HTML documents hosted directly on your GitHub network architecture.</p>
+            <p>Select a category from the sidebar to browse custom items, stat balances, and ported Fandom tables.</p>
+        </div>
+    </main>
+
+</body>
+</html>
