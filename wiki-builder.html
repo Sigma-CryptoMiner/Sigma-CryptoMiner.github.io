@@ -217,7 +217,7 @@ function downloadCompiledPage() {
     const body = compileWikitext(document.getElementById('wikitextInput').value);
     const html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n' +
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
-        '<title>Repentance Plus Wiki - ' + esc(rawName) + '</title>\n<link rel="icon" href="/favicon.png">\n<style>' + PAGE_CSS + '</style>\n</head>\n<body>\n'
+        '<title>Repentance Plus Wiki - ' + esc(rawName) + '</title>\n<link rel="icon" href="/favicon.png">\n<style>' + PAGE_CSS + '</style>\n</head>\n<body>\n' +
         '<aside>\n<h2>Wiki Directory</h2>\n' + renderNav(tree, page, 'nav') + '\n</aside>\n' +
         '<main>\n<div class="card">\n' + body + '\n</div>\n</main>\n</body>\n</html>';
 
