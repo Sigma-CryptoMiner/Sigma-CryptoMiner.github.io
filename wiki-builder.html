@@ -33,11 +33,15 @@ main { flex:1; padding:40px; overflow-y:auto; }
 </head>
 <body>
 <aside>
-    <h2>Wikitext Master Processor <small style="font-weight:normal;opacity:.7">(v3: dropdowns + icon)</small></h2>
+    <h2>Wikitext Master Processor <small style="font-weight:normal;opacity:.7">(v4)</small></h2>
     <p>Convert Fandom syntax and export pages that share one navigation menu.</p>
 
     <label><b>1. Page Target Identifier (Matches Link Name):</b></label>
     <input type="text" id="pageFileName" placeholder="e.g., collectibles" value="Collectibles">
+
+    <label><b>Image folder or base URL:</b></label>
+    <input type="text" id="imageBase" placeholder="images/">
+    <p>Use <code>images/</code> for a folder next to your pages, or a full URL ending in a slash. Re-export pages after changing it.</p>
 
     <label><b>2. Navigation Menu</b></label>
     <p>One page per line. Indent a line (2 spaces) to put it in a dropdown under the line above it. Use <code>Label | filename</code> if the file name differs from the label.</p>
@@ -54,8 +58,14 @@ main { flex:1; padding:40px; overflow-y:auto; }
 <main><div class="wiki-card" id="outputWorkspace"></div></main>
 
 <script>
-// Set to your wiki's Special:FilePath URL (keep the trailing slash).
-const IMAGE_BASE = "images/";
+// Image folder or base URL now comes from the sidebar field (saved in the browser).
+function getImageBase() {
+    let v = document.getElementById('imageBase').value.trim();
+    if (v && !v.endsWith('/')) v += '/';
+    return v;
+}
+function loadImageBase() { try { return localStorage.getItem('wiki_image_base') || 'images/'; } catch (e) { return 'images/'; } }
+function saveImageBase(v) { try { localStorage.setItem('wiki_image_base', v); } catch (e) {} }
 
 function slug(t) { return t.trim().toLowerCase().replace(/ /g, '_'); }
 function esc(t) { return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -115,7 +125,7 @@ function compileWikitext(rawText) {
             else if (/^(center|left|right)$/i.test(opt)) align = opt.toLowerCase();
             else if (/^link=/i.test(opt)) target = opt.slice(5).replace(/^\[\[|\]\]$/g, '').trim();
         });
-        let img = '<img src="' + IMAGE_BASE + encodeURIComponent(file) + '" alt="' + file + '"' + (width ? ' style="width:' + width + 'px"' : '') + '>';
+        let img = '<img src="' + getImageBase() + encodeURIComponent(file) + '" alt="' + file + '"' + (width ? ' style="width:' + width + 'px"' : '') + '>';
         if (target) img = '<a href="' + slug(target) + '.html">' + img + '</a>';
         if (align === 'center') return '<div style="text-align:center">' + img + '</div>';
         if (align === 'left' || align === 'right') return '<div style="float:' + align + ';margin:0 12px 12px 12px">' + img + '</div>';
@@ -233,9 +243,11 @@ function downloadCompiledPage() {
 
 document.getElementById('previewBtn').addEventListener('click', processAndPreview);
 document.getElementById('downloadBtn').addEventListener('click', downloadCompiledPage);
+document.getElementById('imageBase').addEventListener('input', e => { saveImageBase(e.target.value); processAndPreview(); });
 document.getElementById('navInput').addEventListener('input', e => saveNavText(e.target.value));
 
 window.addEventListener('load', function () {
+    document.getElementById('imageBase').value = loadImageBase();
     document.getElementById('navInput').value = loadNavText();
     document.getElementById('wikitextInput').value =
         '<mainpage-leftcolumn-start />\n' +
