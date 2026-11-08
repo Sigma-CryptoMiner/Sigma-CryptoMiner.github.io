@@ -21,7 +21,7 @@ button:hover { opacity:0.9; }
 .download-btn { background-color:#38b000; }
 main { flex:1; padding:40px; overflow-y:auto; }
 .wiki-card { background-color:var(--card-bg); padding:35px; border-radius:8px; border:2px solid var(--border-color); box-shadow:0 4px 15px rgba(0,0,0,0.6); }
-.wiki-card img { max-width:120px; height:auto; display:inline-block; margin:10px; vertical-align:middle; background:rgba(0,0,0,0.3); padding:6px; border-radius:4px; border:1px solid var(--border-color); }
+.wiki-card img { max-width:100%; height:auto; vertical-align:middle; }
 .wiki-card table { width:100%; border-collapse:collapse; margin:20px 0; background:rgba(0,0,0,0.4); border:2px solid var(--border-color); }
 .wiki-card td { padding:12px; vertical-align:top; border:1px solid var(--border-color); }
 .wiki-card th { background-color:var(--accent-color); color:white; padding:10px; text-align:left; border:1px solid var(--border-color); }
@@ -55,7 +55,7 @@ main { flex:1; padding:40px; overflow-y:auto; }
 
 <script>
 // Set to your wiki's Special:FilePath URL (keep the trailing slash).
-const IMAGE_BASE = "images/";
+const IMAGE_BASE = "https://YOUR-WIKI.fandom.com/wiki/Special:FilePath/";
 
 function slug(t) { return t.trim().toLowerCase().replace(/ /g, '_'); }
 function esc(t) { return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -104,10 +104,23 @@ function compileWikitext(rawText) {
     src = src.replace(/<mainpage-.*?\/>/g, '').replace(/\[\[Category:.*?\]\]/g, '').replace(/<nowiki\/>/g, '');
     src = src.replace(/'''(.*?)'''/g, '<strong>$1</strong>').replace(/''(.*?)''/g, '<em>$1</em>');
 
-    src = src.replace(/\[\[File:([^|\]]+).*?link=\[\[([^\]]+)\]\]\]\]/g, (m, f, t) =>
-        '<a href="' + slug(t) + '.html"><img src="' + IMAGE_BASE + encodeURIComponent(f.trim()) + '" alt="' + f.trim() + '"></a>');
-    src = src.replace(/\[\[File:([^|\]]+).*?\]\]/g, (m, f) =>
-        '<img src="' + IMAGE_BASE + encodeURIComponent(f.trim()) + '" alt="' + f.trim() + '">');
+    // Images: honor size (480x480px or 150px), alignment (center/left/right) and link=
+    src = src.replace(/\[\[File:((?:[^\[\]]|\[\[[^\]]*\]\])*)\]\]/g, (m, inner) => {
+        const parts = inner.split('|').map(x => x.trim());
+        const file = parts.shift();
+        let width = '', align = '', target = '';
+        parts.forEach(opt => {
+            let mm;
+            if ((mm = opt.match(/^(\d+)x(\d+)px$/)) || (mm = opt.match(/^(\d+)px$/))) width = mm[1];
+            else if (/^(center|left|right)$/i.test(opt)) align = opt.toLowerCase();
+            else if (/^link=/i.test(opt)) target = opt.slice(5).replace(/^\[\[|\]\]$/g, '').trim();
+        });
+        let img = '<img src="' + IMAGE_BASE + encodeURIComponent(file) + '" alt="' + file + '"' + (width ? ' style="width:' + width + 'px"' : '') + '>';
+        if (target) img = '<a href="' + slug(target) + '.html">' + img + '</a>';
+        if (align === 'center') return '<div style="text-align:center">' + img + '</div>';
+        if (align === 'left' || align === 'right') return '<div style="float:' + align + ';margin:0 12px 12px 12px">' + img + '</div>';
+        return img;
+    });
     src = src.replace(/\[\[([^|\]]+)\|([^\]]+)\]\]/g, (m, t, d) => '<a href="' + slug(t) + '.html">' + d + '</a>');
     src = src.replace(/\[\[([^\]]+)\]\]/g, (m, t) => '<a href="' + slug(t) + '.html">' + t + '</a>');
 
@@ -180,7 +193,7 @@ main { flex:1; padding:40px; overflow-y:auto; }
 table { width:100%; border-collapse:collapse; margin:20px 0; background:rgba(0,0,0,0.4); border:2px solid var(--border-color); }
 th, td { border:1px solid var(--border-color); padding:12px; text-align:left; vertical-align:top; }
 th { background-color:var(--accent-color); color:white; }
-img { max-width:120px; height:auto; display:inline-block; vertical-align:middle; background:rgba(0,0,0,0.3); padding:6px; border-radius:4px; border:1px solid var(--border-color); }
+img { max-width:100%; height:auto; vertical-align:middle; }
 a { color:#d4a5ff; text-decoration:none; font-weight:bold; }
 a:hover { text-decoration:underline; color:#fff; }
 ul { margin-left:25px; margin-bottom:15px; }
@@ -204,7 +217,7 @@ function downloadCompiledPage() {
     const body = compileWikitext(document.getElementById('wikitextInput').value);
     const html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n' +
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
-        '<title>Repentance Plus Wiki - ' + esc(rawName) + '</title>\n<style>' + PAGE_CSS + '</style>\n</head>\n<body>\n' +
+        '<title>Repentance Plus Wiki - ' + esc(rawName) + '</title>\n<link rel="icon" href="/favicon.png">\n<style>' + PAGE_CSS + '</style>\n</head>\n<body>\n'
         '<aside>\n<h2>Wiki Directory</h2>\n' + renderNav(tree, page, 'nav') + '\n</aside>\n' +
         '<main>\n<div class="card">\n' + body + '\n</div>\n</main>\n</body>\n</html>';
 
