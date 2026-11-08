@@ -182,7 +182,7 @@ function processAndPreview() {
 const PAGE_CSS = `
 :root { --bg-color:#110814; --text-color:#e2daf0; --sidebar-bg:#1e1024; --card-bg:rgba(36,20,43,0.9); --accent-color:#7b2cbf; --border-color:#4a255c; }
 * { box-sizing:border-box; margin:0; padding:0; }
-body { font-family:'Segoe UI',Tahoma,sans-serif; background-color:var(--bg-color); background-image:radial-gradient(circle,#251230 10%,#110814 90%); color:var(--text-color); display:flex; min-height:100vh; }
+body { font-family:'Segoe UI',Tahoma,sans-serif; background-color:var(--bg-color); background-image:url('/background.png'),radial-gradient(circle,#251230 10%,#110814 90%); background-size:cover; background-position:center; background-repeat:no-repeat; background-attachment:fixed; color:var(--text-color); display:flex; min-height:100vh; }
 aside { width:280px; background-color:var(--sidebar-bg); padding:25px; border-right:3px solid var(--border-color); flex-shrink:0; }
 h2 { border-bottom:2px solid var(--accent-color); padding-bottom:5px; margin-bottom:15px; font-size:1.2rem; color:#fff; }
 ul.nav, ul.sub { list-style:none; display:flex; flex-direction:column; gap:8px; margin:0; padding:0; }
